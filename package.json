@@ -1,0 +1,23 @@
+{
+  "name": "@netivo/project-starter",
+  "version": "1.0.0",
+  "description": "Script for starting projects",
+  "bin": {
+    "netivo-ps": "cli/index.js"
+  },
+  "author": "Netivo <biuro@netivo.pl> (http://netivo.pl)",
+  "license": "GPL-3.0",
+  "babel": {
+    "presets": [
+      "@babel/preset-env"
+    ]
+  },
+  "dependencies": {
+    "envfile": "^6.14.0",
+    "js-yaml": "^4.1.0",
+    "path": "^0.12.7",
+    "prompts": "^2.4.1",
+    "replace-in-files": "^3.0.0",
+    "slugify": "^1.5.0"
+  }
+}
