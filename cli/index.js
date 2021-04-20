@@ -21,10 +21,11 @@ const fs = require('fs');
 const yaml = require('js-yaml');
 const { parse, stringify } = require('envfile')
 const path = require('path');
-const replace_in_files = require('replace-in-files');
+const replace = require('replace-in-file');
 let get_data = require('./get_data');
 
 let create_project = (opt) => {
+    file_log('--- Creating project')
     options = opt;
     if(fs.existsSync(options.name)) {
         let files = fs.readdirSync(options.name);
@@ -35,8 +36,10 @@ let create_project = (opt) => {
     } else {
         fs.mkdirSync(options.name);
     }
+    file_log('--- Created project directory');
     create_structure();
     create_files();
+    file_log('--- Project created');
 };
 
 let create_structure = () => {
@@ -47,6 +50,8 @@ let create_structure = () => {
     fs.mkdirSync(options.name + '/sources/javascript');
     fs.mkdirSync(options.name + '/sources/sass');
     fs.mkdirSync(options.name + '/sources/gutenberg');
+
+    file_log('--- Done');
 }
 
 let create_files = () => {
@@ -57,6 +62,7 @@ let create_files = () => {
 }
 
 let create_package_json = () => {
+    file_log('--- Creating package.json');
     let structure = {
         "name": options.name,
         "version": "1.0.0",
@@ -76,9 +82,11 @@ let create_package_json = () => {
     }
     let json_string = JSON.stringify(structure, null, 2);
     fs.writeFileSync(options.name+'/package.json', json_string);
+    file_log('--- Done');
 }
 
 let create_style_css = () => {
+    file_log('--- Creating style.css');
     let style_css =
         "/**\n" +
         " * Theme Name: "+options.wordpress.themeName+"\n" +
@@ -90,9 +98,11 @@ let create_style_css = () => {
         " */";
 
     fs.writeFileSync(options.name+'/style.css', style_css);
+    file_log('--- Done');
 }
 
 let create_docker = () => {
+    file_log('--- Creating docker config');
     let docker_compose = {
         version: "3.8",
         services: {
@@ -157,9 +167,11 @@ let create_docker = () => {
 
     let env_string = stringify(env_data);
     fs.writeFileSync(options.name+'/.env', env_string);
+    file_log('--- Done');
 }
 
 let create_php_structure = () => {
+    file_log('--- Creating Wordpress files');
     fs.mkdirSync(options.name + '/Netivo');
     fs.mkdirSync(options.name + '/Netivo/' + options.namespace);
     fs.mkdirSync(options.name + '/Netivo/' + options.namespace + '/Theme');
@@ -172,27 +184,22 @@ let create_php_structure = () => {
     fs.copyFileSync(path.join( path.dirname( __dirname ), 'templates','class_main.php'), options.name + '/Netivo/'+options.namespace+'/Theme/Main.php');
     fs.copyFileSync(path.join( path.dirname( __dirname ), 'templates','class_panel.php'), options.name + '/Netivo/'+options.namespace+'/Theme/Admin/Panel.php');
 
-    let replace_strings = [
-        {search: '${PROJECT_NAME}', replace: options.wordpress.themeName},
-        {search: '${DATE}', replace: (new Date()).toUTCString()},
-        {search: '${NAMESPACE}', replace: '\\Netivo\\'+options.namespace+'\\Theme'},
-        {search: '${NAMESPACE_STRING}', replace: '\\\\Netivo\\\\'+options.namespace+'\\\\Theme'},
-        {search: '${CLASS_PATH}', replace: '/Netivo/'+options.namespace+'/Theme'}
-    ]
+    file_log('--- Done copying files');
 
-    replace_strings.forEach(rep_data => {
-        let rep_options = {
+    let search = [/\${PROJECT_NAME}/g, /\${DATE}/g, /\${NAMESPACE}/g, /\${NAMESPACE_STRING}/g, /\${CLASS_PATH}/g];
+    let rep = [options.wordpress.themeName, (new Date()).toUTCString(), '\\Netivo\\'+options.namespace+'\\Theme', '\\\\Netivo\\\\'+options.namespace+'\\\\Theme', '/Netivo/'+options.namespace+'/Theme'];
+
+    try {
+        let result = replace.sync({
             files: options.name + '/**/*.php',
-            from: rep_data.search,
-            to: rep_data.replace
-        }
-        replace_in_files(rep_options)
-            .then(({ changedFiles, countOfMatchesByPaths }) => {
-            })
-            .catch(error => {
-                file_log('Error occurred:', error);
-            });
-    });
+            from: search,
+            to: rep
+        });
+        file_log('--- Done replacing values');
+    } catch (error){
+        file_log('--- Error during replacing values: '+error);
+    }
+
 }
 
 let file_log = (log) => {
