@@ -172,27 +172,27 @@ let create_php_structure = () => {
     fs.copyFileSync(path.join( path.dirname( __dirname ), 'templates','class_main.php'), options.name + '/Netivo/'+options.namespace+'/Theme/Main.php');
     fs.copyFileSync(path.join( path.dirname( __dirname ), 'templates','class_panel.php'), options.name + '/Netivo/'+options.namespace+'/Theme/Admin/Panel.php');
 
-    let replace_strings = {
+    let replace_strings = [
+        {search: '${PROJECT_NAME}', replace: options.wordpress.themeName},
+        {search: '${DATE}', replace: (new Date()).toUTCString()},
+        {search: '${NAMESPACE}', replace: '\\Netivo\\'+options.namespace+'\\Theme'},
+        {search: '${NAMESPACE_STRING}', replace: '\\\\Netivo\\\\'+options.namespace+'\\\\Theme'},
+        {search: '${CLASS_PATH}', replace: '/Netivo/'+options.namespace+'/Theme'}
+    ]
 
-    }
-
-    const rep_options = {
-        files: options.name + '/**/*.php',
-
-        from: '${PROJECT_NAME}',  // string or regex
-        to: options.wordpress.themeName, // string or fn  (fn: carrying last argument - path to replaced file)
-    };
-
-    replace_in_files(rep_options)
-        .then(({ changedFiles, countOfMatchesByPaths }) => {
-            console.log('Modified files:', changedFiles);
-            console.log('Count of matches by paths:', countOfMatchesByPaths);
-            console.log('was called with:', rep_options);
-        })
-        .catch(error => {
-            console.error('Error occurred:', error);
-        });
-
+    replace_strings.forEach(rep_data => {
+        let rep_options = {
+            files: options.name + '/**/*.php',
+            from: rep_data.search,
+            to: rep_data.replace
+        }
+        replace_in_files(rep_options)
+            .then(({ changedFiles, countOfMatchesByPaths }) => {
+            })
+            .catch(error => {
+                file_log('Error occurred:', error);
+            });
+    });
 }
 
 let file_log = (log) => {
